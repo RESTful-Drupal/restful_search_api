@@ -8,6 +8,11 @@
 abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \RestfulDataProviderSearchAPIInterface {
 
   /**
+   * Separator to drill down on nested result objects for 'property'.
+   */
+  const NESTING_SEPARATOR = '::';
+
+  /**
    * Index machine name to query against.
    *
    * @var string
@@ -96,12 +101,6 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
     $page = empty($request['page']) ? 0 : $request['page'];
     $options['offset'] = $options['limit'] * $page;
 
-    // sort: An array of sort directives of the form $field => $order, where
-    // $order is either 'ASC' or 'DESC'.
-    if ($sort = $this->queryForListSort()) {
-      $options['sort'] = $sort;
-    }
-
     if ($filter = $this->parseRequestForListFilter()) {
       $options['filter'] = $filter;
     }
@@ -150,29 +149,52 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
    * @param array $options
    *   An array of options passed to search_api_query.
    *
+   * @throws \RestfulServerConfigurationException
+   *   For invalid indices.
+   *
    * @return array
    *   The array of results.
    *
    * @see search_api_query()
    */
   protected function executeQuery($keywords, array $options) {
-    $resultsObj = search_api_query($this->getSearchIndex(), $options)
+    $index = search_api_index_load($this->getSearchIndex());
+
+    if (!$index) {
+      throw new \RestfulServerConfigurationException(format_string('Search API Exception: Unknown index with ID @id.', array(
+        '@id' => $this->getSearchIndex(),
+      )));
+    }
+    $query = $index->query($options);
+
+    $this->queryForListSort($query);
+    $resultsObj = $query
       ->keys($keywords)
       ->execute();
+
     $this->setTotalCount($resultsObj['result count']);
-    return array_values($resultsObj['results']);
+    $results = $index->loadItems(array_keys($resultsObj['results']));
+
+    // Add the index id and the relevance.
+    foreach ($resultsObj['results'] as $id => $result) {
+      $results[$id]->search_api_id = $result['id'];
+      $results[$id]->search_api_relevance = $result['score'];
+    }
+    return $results;
   }
 
   /**
    * Sort the query for list.
    *
+   * @param \SearchApiQueryInterface $query
+   *   The Search API query.
+   *
    * @throws \RestfulBadRequestException
    *
    * @see \RestfulEntityBase::getQueryForList
    */
-  protected function queryForListSort() {
+  protected function queryForListSort(\SearchApiQueryInterface $query) {
     $public_fields = $this->getPublicFields();
-    $private_sorts = array();
 
     // Get the sorting options from the request object.
     $sorts = $this->parseRequestForListSort();
@@ -180,10 +202,39 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
     $sorts = $sorts ? $sorts : $this->defaultSortInfo();
 
     foreach ($sorts as $sort => $direction) {
-      $private_sorts[$public_fields[$sort]['property']] = $direction;
+      $property = empty($public_fields[$sort]['property']) ? $sort : $public_fields[$sort]['property'];
+      try {
+        $query->sort($property, $direction);
+      }
+      catch (\SearchApiException $e) {
+        throw new \RestfulBadRequestException($e->getMessage());
+      }
+    }
+  }
+
+  /**
+   * Overrides \RestfulBase::parseRequestForListSort
+   */
+  protected function parseRequestForListSort() {
+    $request = $this->getRequest();
+    $public_fields = $this->getPublicFields();
+
+    if (empty($request['sort'])) {
+      return array();
+    }
+    $url_params = $this->getPluginKey('url_params');
+    if (!$url_params['sort']) {
+      throw new \RestfulBadRequestException('Sort parameters have been disabled in server configuration.');
     }
 
-    return $private_sorts;
+    $sorts = array();
+    foreach (explode(',', $request['sort']) as $sort) {
+      $direction = $sort[0] == '-' ? 'DESC' : 'ASC';
+      $sort = str_replace('-', '', $sort);
+
+      $sorts[$sort] = $direction;
+    }
+    return $sorts;
   }
 
   /**
@@ -199,7 +250,7 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
   /**
    * Prepares the output array from the search result.
    *
-   * @param array $result
+   * @param object $result
    *   Search result from Search API.
    *
    * @return array
@@ -216,7 +267,11 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
       }
       // Map row names to public properties.
       elseif ($info['property']) {
-        $value = $result[$info['property']];
+        $parts = explode(static::NESTING_SEPARATOR, $info['property']);
+        $value = $result->{array_shift($parts)};
+        foreach ($parts as $part) {
+          $value = $value[$part];
+        }
       }
 
       // Execute the process callbacks.
