@@ -13,10 +13,10 @@ class RestfulSearchAPIBasicSearch extends \RestfulDataProviderSearchAPI implemen
   public function publicFieldsInfo() {
     return array(
       'id' => array(
-        'property' => 'nid',
+        'property' => 'id',
       ),
-      'label' => array(
-        'property' => 'title',
+      'score' => array(
+        'property' => 'score',
       ),
     );
   }

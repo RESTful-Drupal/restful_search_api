@@ -5,5 +5,5 @@ dependencies[] = search_api
 core = 7.x
 
 ; Files
-files[] = includes/RestfulDataProviderSearchAPI.php
-files[] = includes/RestfulDataProviderSearchAPIInterface.php
+files[] = include/RestfulDataProviderSearchAPI.php
+files[] = include/RestfulDataProviderSearchAPIInterface.php

@@ -15,6 +15,13 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
   protected $searchIndex;
 
   /**
+   * Total count of results after executing the query.
+   *
+   * @var int
+   */
+  protected $totalCount;
+
+  /**
    * Return the search index machine name.
    *
    * @return string
@@ -31,6 +38,15 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
    */
   public function setSearchIndex($searchIndex) {
     $this->searchIndex = $searchIndex;
+  }
+
+  /**
+   * Set the total results count after executing the query.
+   *
+   * @param int $totalCount
+   */
+  public function setTotalCount($totalCount) {
+    $this->totalCount = $totalCount;
   }
 
   /**
@@ -57,7 +73,7 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
    * {@inheritdoc}
    */
   public function getTotalCount() {
-    // TODO.
+    return $this->totalCount;
   }
 
   /**
@@ -82,14 +98,16 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
 
     // sort: An array of sort directives of the form $field => $order, where
     // $order is either 'ASC' or 'DESC'.
-    $options['sort'] = $this->parseRequestForListSort();
+    if ($sort = $this->parseRequestForListSort()) {
+      $options['sort'] = $sort;
+    }
 
     if ($filter = $this->parseRequestForListFilter()) {
       $options['filter'] = $filter;
     }
     try {
       // Query SearchAPI for the results
-      $results = search_api_query($this->getSearchIndex(), $options);
+      return $this->executeQuery($options);
     }
     catch (\SearchApiException $e) {
       // Relay the exception with one of RESTful's types.
@@ -97,9 +115,6 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
         '@message' => $e->getMessage(),
       )));
     }
-
-    $return = $results;
-    return $return;
   }
 
   /**
@@ -120,5 +135,23 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
     }
 
     return $search_api_filter;
+  }
+
+  /**
+   * Executes the Search API query and stores the total count.
+   *
+   * @param array $options
+   *   An array of options passed to search_api_query.
+   *
+   * @return array
+   *   The array of results.
+   *
+   * @see search_api_query()
+   */
+  protected function executeQuery(array $options) {
+    $resultsObj = search_api_query($this->getSearchIndex(), $options)
+      ->execute();
+    $this->setTotalCount($resultsObj['result count']);
+    return array_values($resultsObj['results']);
   }
 }
