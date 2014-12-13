@@ -27,6 +27,11 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
   protected $totalCount;
 
   /**
+   * Tracks the sorts that have been applied.
+   */
+  private $sorted = array();
+
+  /**
    * Return the search index machine name.
    *
    * @return string
@@ -118,6 +123,14 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
       )));
     }
 
+    // This is an emergency sort. Only apply it if no sort could be applied.
+    $any_sort_applied = array_filter(array_values($this->sorted));
+    $result = reset($output);
+    $available_keys = array_keys($result);
+    if (!$any_sort_applied) {
+      $this->manualArraySort($available_keys, $output);
+    }
+
     return $output;
   }
 
@@ -180,6 +193,7 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
       $results[$id]->search_api_id = $result['id'];
       $results[$id]->search_api_relevance = $result['score'];
     }
+
     return $results;
   }
 
@@ -205,9 +219,13 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
       $property = empty($public_fields[$sort]['property']) ? $sort : $public_fields[$sort]['property'];
       try {
         $query->sort($property, $direction);
+
+        // Mark this sort as applied.
+        $this->sorted[$sort] = TRUE;
       }
       catch (\SearchApiException $e) {
-        throw new \RestfulBadRequestException($e->getMessage());
+        // Do not throw an exception, we will sort manually the array
+        // afterwards.
       }
     }
   }
@@ -233,6 +251,9 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
       $sort = str_replace('-', '', $sort);
 
       $sorts[$sort] = $direction;
+
+      // Initially mark all sort criteria as not applied.
+      $this->sorted[$sort] = FALSE;
     }
     return $sorts;
   }
@@ -285,6 +306,35 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
     }
 
     return $output;
+  }
+
+  /**
+   * If no sort could be applied via Search API, then sort the results manually.
+   *
+   * This is a last resource thing and arguably a good idea. If the results are
+   * paginated it can lead to unexpected results.
+   *
+   * @param $available_keys
+   *   The available keys on the results array.
+   *
+   * @param $results
+   *   The array of search results from Search API.
+   */
+  protected function manualArraySort($available_keys, &$results) {
+    $sorts = $this->parseRequestForListSort();
+    $sorts = $sorts ? $sorts : $this->defaultSortInfo();
+    foreach ($sorts as $sort => $direction) {
+      // Since this is an expensive operation only apply the first sort.
+      if (in_array($sort, $available_keys)) {
+        usort($results, function ($a, $b) use ($sort, $direction) {
+          if ($direction == 'DESC') {
+            return $a[$sort] < $b[$sort];
+          }
+          return $a[$sort] > $b[$sort];
+        });
+        break;
+      }
+    }
   }
 
 }
