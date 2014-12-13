@@ -84,7 +84,7 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
    */
   public function view($id) {
     // In this case the ID is the search query.
-    $options = array();
+    $options = $output = array();
     $request = $this->getRequest();
     // Construct the options array.
 
@@ -93,12 +93,12 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
 
     // offset: The position of the first returned search results relative to the
     // whole result in the index.
-    $page = $request['page'] ?: 0;
+    $page = empty($request['page']) ? 0 : $request['page'];
     $options['offset'] = $options['limit'] * $page;
 
     // sort: An array of sort directives of the form $field => $order, where
     // $order is either 'ASC' or 'DESC'.
-    if ($sort = $this->parseRequestForListSort()) {
+    if ($sort = $this->queryForListSort()) {
       $options['sort'] = $sort;
     }
 
@@ -107,7 +107,10 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
     }
     try {
       // Query SearchAPI for the results
-      return $this->executeQuery($options);
+      $search_results = $this->executeQuery($id, $options);
+      foreach ($search_results as $search_result) {
+        $output[] = $this->mapSearchResultToPublicFields($search_result);
+      }
     }
     catch (\SearchApiException $e) {
       // Relay the exception with one of RESTful's types.
@@ -115,6 +118,8 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
         '@message' => $e->getMessage(),
       )));
     }
+
+    return $output;
   }
 
   /**
@@ -140,6 +145,8 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
   /**
    * Executes the Search API query and stores the total count.
    *
+   * @param string $keywords
+   *   Keywords to search.
    * @param array $options
    *   An array of options passed to search_api_query.
    *
@@ -148,10 +155,81 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
    *
    * @see search_api_query()
    */
-  protected function executeQuery(array $options) {
+  protected function executeQuery($keywords, array $options) {
     $resultsObj = search_api_query($this->getSearchIndex(), $options)
+      ->keys($keywords)
       ->execute();
     $this->setTotalCount($resultsObj['result count']);
     return array_values($resultsObj['results']);
   }
+
+  /**
+   * Sort the query for list.
+   *
+   * @throws \RestfulBadRequestException
+   *
+   * @see \RestfulEntityBase::getQueryForList
+   */
+  protected function queryForListSort() {
+    $public_fields = $this->getPublicFields();
+    $private_sorts = array();
+
+    // Get the sorting options from the request object.
+    $sorts = $this->parseRequestForListSort();
+
+    $sorts = $sorts ? $sorts : $this->defaultSortInfo();
+
+    foreach ($sorts as $sort => $direction) {
+      $private_sorts[$public_fields[$sort]['property']] = $direction;
+    }
+
+    return $private_sorts;
+  }
+
+  /**
+   * Return the default sort.
+   *
+   * @return array
+   *   A default sort array.
+   */
+  public function defaultSortInfo() {
+    return array();
+  }
+
+  /**
+   * Prepares the output array from the search result.
+   *
+   * @param array $result
+   *   Search result from Search API.
+   *
+   * @return array
+   *   The prepared output.
+   */
+  protected function mapSearchResultToPublicFields($result) {
+    $output = array();
+    // Loop over all the defined public fields.
+    foreach ($this->getPublicFields() as $public_field_name => $info) {
+      $value = NULL;
+      // If there is a callback defined execute it instead of a direct mapping.
+      if ($info['callback']) {
+        $value = static::executeCallback($info['callback'], array($result));
+      }
+      // Map row names to public properties.
+      elseif ($info['property']) {
+        $value = $result[$info['property']];
+      }
+
+      // Execute the process callbacks.
+      if ($value && $info['process_callbacks']) {
+        foreach ($info['process_callbacks'] as $process_callback) {
+          $value = static::executeCallback($process_callback, array($value));
+        }
+      }
+
+      $output[$public_field_name] = $value;
+    }
+
+    return $output;
+  }
+
 }
