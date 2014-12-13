@@ -28,8 +28,8 @@ class RestfulSearchAPIBasicSearch extends \RestfulDataProviderSearchAPI implemen
         'property' => 'search_api_relevance',
       ),
       'body' => array(
-        // TODO: Move nested logic to sub-property.
-        'property' => 'body::' . LANGUAGE_NONE . '::0::value',
+        'property' => 'body',
+        'sub-property' => LANGUAGE_NONE . '::0::value',
       ),
       'title' => array(
         'property' => 'title',
