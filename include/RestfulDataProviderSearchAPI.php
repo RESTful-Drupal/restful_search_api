@@ -106,9 +106,6 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
     $page = empty($request['page']) ? 0 : $request['page'];
     $options['offset'] = $options['limit'] * $page;
 
-    if ($filter = $this->parseRequestForListFilter()) {
-      $options['filter'] = $filter;
-    }
     try {
       // Query SearchAPI for the results
       $search_results = $this->executeQuery($id, $options);
@@ -140,18 +137,50 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
   protected function parseRequestForListFilter() {
     // At the moment RESTful only supports AND conjunctions.
     $search_api_filter = new SearchApiQueryFilter('AND');
-    $search_api_filters = $search_api_filter->getFilters();
-    $filters = parent::parseRequestForListFilter();
-    // Now translate the RESTful way into the Search API way.
-    foreach ($filters as $filter) {
-      $search_api_filters[] = array(
-        'field' => $filter['public_field'],
-        'value' => $filter['value'],
-        'operator' => $filter['operator'],
-      );
+
+    $request = $this->getRequest();
+    if (empty($request['filter'])) {
+      // No filtering is needed.
+      return $search_api_filter;
+    }
+    $url_params = $this->getPluginKey('url_params');
+    if (!$url_params['filter']) {
+      throw new \RestfulBadRequestException('Filter parameters have been disabled in server configuration.');
+    }
+
+    $public_fields = $this->getPublicFields();
+
+    foreach ($request['filter'] as $public_field => $value) {
+      $field = empty($public_fields[$public_field]['property']) ? $public_field : $public_fields[$public_field]['property'];
+
+      if (!is_array($value)) {
+        // Request uses the shorthand form for filter. For example
+        // filter[foo]=bar would be converted to filter[foo][value] = bar.
+        $value = array('value' => $value);
+      }
+      // Set default operator.
+      $value += array('operator' => '=');
+
+      // Clean the operator in case it came from the URL.
+      // e.g. filter[minor_version][operator]=">="
+      $value['operator'] = str_replace(array('"', "'"), '', $value['operator']);
+
+      $this->isValidOperatorForFilter($value['operator']);
+
+      $search_api_filter->condition($field, $value['value'], $value['operator']);
     }
 
     return $search_api_filter;
+  }
+
+  /**
+   * Filter the query for list.
+   *
+   * @param \SearchApiQueryInterface $query
+   *   The query object.
+   */
+  protected function queryForListFilter(\SearchApiQueryInterface $query) {
+    $query->filter($this->parseRequestForListFilter());
   }
 
   /**
@@ -181,6 +210,7 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
     $query = $index->query($options);
 
     $this->queryForListSort($query);
+    $this->queryForListFilter($query);
     $resultsObj = $query
       ->keys($keywords)
       ->execute();
