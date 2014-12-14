@@ -11,5 +11,7 @@ $plugin = array(
   'class' => 'RestfulSearchAPIBasicSearch',
   'authentication_types' => TRUE,
   'authentication_optional' => TRUE,
-  'pass_through' => TRUE,
+  // Use pass_through to expose the complete search result objects. This is
+  // useful while developing to allow you to know how to do the field mappings.
+  // 'pass_through' => TRUE,
 );
