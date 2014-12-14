@@ -11,4 +11,5 @@ $plugin = array(
   'class' => 'RestfulSearchAPIBasicSearch',
   'authentication_types' => TRUE,
   'authentication_optional' => TRUE,
+  'pass_through' => TRUE,
 );

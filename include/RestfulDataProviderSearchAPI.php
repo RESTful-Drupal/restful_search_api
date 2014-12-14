@@ -113,7 +113,12 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
       // Query SearchAPI for the results
       $search_results = $this->executeQuery($id, $options);
       foreach ($search_results as $search_result) {
-        $output[] = $this->mapSearchResultToPublicFields($search_result);
+        if ($this->getPluginKey('pass_through')) {
+          $output[] = (array) $search_result;
+        }
+        else {
+          $output[] = $this->mapSearchResultToPublicFields($search_result);
+        }
       }
     }
     catch (\SearchApiException $e) {
