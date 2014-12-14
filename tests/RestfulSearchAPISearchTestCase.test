@@ -103,7 +103,7 @@ class RestfulSearchAPISearchTestCase extends \DrupalWebTestCase {
     $handler = restful_get_restful_handler('search', 1, 0);
     // Search all the items that contain the keyword title.
     $results = $handler->get('Title');
-    $this->assertNotTrue(empty($results), 'Some results were found.');
+    $this->assertFalse(empty($results), 'Some results were found.');
   }
 
 }
