@@ -32,6 +32,11 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
   private $sorted = array();
 
   /**
+   * Additional information for the query.
+   */
+  protected $hateoas = array();
+
+  /**
    * Return the search index machine name.
    *
    * @return string
@@ -57,6 +62,13 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
    */
   public function setTotalCount($totalCount) {
     $this->totalCount = $totalCount;
+  }
+
+  /**
+   * Additional HATEOAS to be passed to the formatter.
+   */
+  public function additionalHateoas() {
+    return $this->hateoas;
   }
 
   /**
@@ -223,6 +235,10 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
       $results[$id]->search_api_id = $result['id'];
       $results[$id]->search_api_relevance = $result['score'];
     }
+    if (!empty($resultsObj['search_api_facets'])) {
+      $this->hateoas['facets'] = $resultsObj['search_api_facets'];
+    }
+    $this->hateoas['count'] = $resultsObj['result count'];
 
     return $results;
   }
