@@ -7,3 +7,6 @@ core = 7.x
 ; Files
 files[] = include/RestfulDataProviderSearchAPI.php
 files[] = include/RestfulDataProviderSearchAPIInterface.php
+
+; Tests
+files[] = tests/RestfulSearchAPISearchTestCase.test

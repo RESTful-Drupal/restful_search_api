@@ -338,7 +338,7 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
       // Map row names to public properties.
       elseif ($info['property']) {
         $value = $result->{$info['property']};
-        if ($info['sub-property']) {
+        if (!empty($info['sub-property'])) {
           $parts = explode(static::NESTING_SEPARATOR, $info['sub-property']);
           foreach ($parts as $part) {
             $value = $value[$part];

@@ -1,0 +1,4 @@
+name = RESTful Search API test module
+description = Test module
+dependencies[] = restful_search_api
+core = 7.x

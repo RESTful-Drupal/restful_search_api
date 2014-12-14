@@ -1,0 +1,109 @@
+<?php
+
+/**
+ * @file
+ * Contains RestfulSearchAPISearchTestCase.
+ */
+
+class RestfulSearchAPISearchTestCase extends \DrupalWebTestCase {
+
+  const NUM_ITEMS = 10;
+
+  /**
+   * Returns information about this test case.
+   *
+   * @return array
+   *   An array with information about this test case.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Test search API: search integration',
+      'description' => 'Tests that searches return the expected results',
+      'group' => 'RESTful Search API',
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setUp() {
+    parent::setUp('entity', 'search_api', 'search_api_test', 'restful', 'restful_search_api_test');
+
+    $this->drupalLogin($this->drupalCreateUser(array('administer search_api')));
+
+    // Create server.
+    $values = array(
+      'name' => 'Search API test server',
+      'machine_name' => 'test_server',
+      'enabled' => 1,
+      'description' => 'A server used for testing.',
+      'class' => 'search_api_test_service',
+    );
+    search_api_server_insert($values);
+
+    // Create index.
+    $values = array(
+      'name' => 'Search API test index',
+      'machine_name' => 'test_index',
+      'item_type' => 'search_api_test',
+      'enabled' => 1,
+      'description' => 'An index used for testing.',
+      'server' => 'test_server',
+      'options' => array(
+        'fields' => array(
+          'id' => array(
+            'type' => 'integer',
+            'boost' => '1.0',
+            'indexed' => 1,
+          ),
+          'title' => array(
+            'type' => 'text',
+            'boost' => '5.0',
+            'indexed' => 1,
+          ),
+          'body' => array(
+            'type' => 'text',
+            'boost' => '1.0',
+            'indexed' => 1,
+          ),
+          'type' => array(
+            'type' => 'string',
+            'boost' => '1.0',
+            'indexed' => 1,
+          ),
+        ),
+      ),
+    );
+    search_api_index_insert($values);
+
+    // Insert items.
+    $count = db_query('SELECT COUNT(*) FROM {search_api_test}')->fetchField();
+    for ($i = 1; $i <= static::NUM_ITEMS; ++$i) {
+      $id = $count + $i;
+      $values = array(
+        'id' => $id,
+        'title' => "Title $id",
+        'body' => $this->randomString(),
+        'type' => 'Item',
+      );
+      db_insert('search_api_test')->fields($values)->execute();
+      module_invoke_all('entity_insert', search_api_test_load($id), 'search_api_test');
+    }
+
+    // Index items.
+    search_api_index_enable('test_index');
+    search_api_server_enable('test_server');
+    search_api_index_items(search_api_index_load('test_index'));
+  }
+
+  /**
+   * Test the search results.
+   */
+  public function testSearch() {
+    $handler = restful_get_restful_handler('search', 1, 0);
+    // Search all the items that contain the keyword title.
+    $results = $handler->get('Title');
+    $this->assertNotTrue(empty($results), 'Some results were found.');
+  }
+
+}
