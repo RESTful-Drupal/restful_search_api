@@ -17,7 +17,7 @@ class RestfulSearchAPISearchTestCase extends \DrupalWebTestCase {
    */
   public static function getInfo() {
     return array(
-      'name' => 'Test search API: search integration',
+      'name' => 'Test search API integration',
       'description' => 'Tests that searches return the expected results',
       'group' => 'RESTful Search API',
     );
