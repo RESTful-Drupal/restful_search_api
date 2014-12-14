@@ -4,7 +4,7 @@ php:
   - 5.3
 
 mysql:
-  database: restful
+  database: restful_search_api
   username: root
   encoding: utf8
 
@@ -22,13 +22,14 @@ before_script:
   - sudo apt-get install -y --force-yes php5-cgi php5-mysql
 
   # create new site, stubbing sendmail path with true to prevent delivery errors and manually resolving drush path
-  - mysql -e 'create database restful'
-  - php -d sendmail_path=`which true` `pear config-get php_dir`/drush/drush.php --yes core-quick-drupal --profile=testing --no-server --db-url=mysql://root:@127.0.0.1/restful --enable=simpletest restful
+  - mysql -e 'create database restful_search_api'
+  - php -d sendmail_path=`which true` `pear config-get php_dir`/drush/drush.php --yes core-quick-drupal --profile=testing --no-server --db-url=mysql://root:@127.0.0.1/restful_search_api --enable=simpletest restful_search_api
 
-  # reference and enable restful in build site
-  - ln -s $(readlink -e $(cd -)) restful/drupal/sites/all/modules/restful
-  - cd restful/drupal
-  - drush --yes pm-enable restful restful_token_auth restful_test restful_search_api restful_search_api_test
+  # reference and enable restful_search_api in build site
+  - ln -s $(readlink -e $(cd -)) restful_search_api/drupal/sites/all/modules/restful_search_api
+  - cd restful_search_api/drupal
+  - drush dl restful --yes
+  - drush --yes pm-enable restful_search_api restful_search_api_test
 
   # Download entity validator.
   - drush dl entity_validator --dev --yes
