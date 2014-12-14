@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/RESTful-Drupal/restful_search_api.svg?branch=7.x-1.x)](https://travis-ci.org/RESTful-Drupal/restful_search_api)
+
 # RESTful Search API
 Expose your Search API results with your RESTful API.
 
