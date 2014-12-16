@@ -44,5 +44,37 @@ sorting will be applied to the output generated after making the query to Search
 API without sorting. Use this type of sorting only if you really need to, the
 preferred method is to use the supported sort properties in Search API.
 
+### Filter by your facets
+Add some facets to the Search API configuration and use them in your search
+queries. To do so use
+[the same format used in RESTful](https://github.com/RESTful-Drupal/restful#filter-1).
+
+If a search has relevant facet information attached, those will be sent along
+with the search results.
+
+```javascript
+// https://www.example.org/api/basic_search/elit?filter[comment_count][value]=2&filter[comment_count][operator]=">="
+{
+    "count": 23,
+    "facets": {
+        "author": [
+            { "filter": "\"0\"", "count": 12 },
+            { "filter": "\"1\"", "count": 11 }
+        ],
+        "comment_count": [
+            { "filter": "\"2\"", "count": 13 },
+            { "filter": "\"3\"", "count": 10 }
+        ]
+    },
+    "hal:basic_search": [
+        { "entity_id": 704, "version_id": 704, "relevance": 0.013727446 },
+        …
+    ],
+    "_links": {
+        "self": { … },
+        "curies": { … }
+    }
+}
+```
 ## Additional information
 See [this post in Medium](https://medium.com/@e0ipso/restful-drupal-with-search-api-f370050a26bb) with some additional information.
