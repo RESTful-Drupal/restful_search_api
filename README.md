@@ -43,3 +43,6 @@ results. If the selected property does not support sorting in Search API the
 sorting will be applied to the output generated after making the query to Search
 API without sorting. Use this type of sorting only if you really need to, the
 preferred method is to use the supported sort properties in Search API.
+
+## Additional information
+See [this post in Medium](https://medium.com/@e0ipso/restful-drupal-with-search-api-f370050a26bb) with some additional information.
