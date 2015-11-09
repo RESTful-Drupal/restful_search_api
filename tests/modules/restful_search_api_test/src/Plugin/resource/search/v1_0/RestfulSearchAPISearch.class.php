@@ -7,6 +7,9 @@
 
 namespace Drupal\restful_search_api_test\Plugin\resource\search\v1_0;
 
+use Drupal\restful\Plugin\resource\Resource;
+use Drupal\restful\Plugin\resource\ResourceInterface;
+
 /**
  * Class Search
  * @package Drupal\restful_search_api_test\Plugin\resource\search\v1_0
@@ -23,7 +26,7 @@ namespace Drupal\restful_search_api_test\Plugin\resource\search\v1_0;
  *   minorVersion = 0
  * )
  */
-class Search extends \RestfulDataProviderSearchAPI implements \RestfulInterface {
+class Search extends Resource implements ResourceInterface {
 
   /**
    * Overrides \RestfulBase::publicFieldsInfo().
