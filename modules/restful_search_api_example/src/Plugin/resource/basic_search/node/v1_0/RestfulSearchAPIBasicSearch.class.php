@@ -5,6 +5,24 @@
  * Contains \RestfulSearchAPIBasicSearch.
  */
 
+/**
+ * Class RestfulSearchAPIBasicSearch
+ * @package Drupal\restful_search_api_example\Plugin\resource\basic_search\node\v1_0
+ *
+ * @Resource(
+ *   name = "basic_search:1.0",
+ *   resource = "basic_search",
+ *   label = "Basic Search",
+ *   description = "Provides basic info doing Search API searches.",
+ *   dataProvider = {
+ *     "searchIndex": "default_node_index"
+ *   },
+ *   authenticationTypes = TRUE,
+ *   authenticationOptional = TRUE
+ *   majorVersion = 1,
+ *   minorVersion = 0
+ * )
+ */
 class RestfulSearchAPIBasicSearch extends \RestfulDataProviderSearchAPI implements \RestfulInterface {
 
   /**
