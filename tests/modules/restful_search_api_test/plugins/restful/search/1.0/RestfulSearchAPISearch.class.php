@@ -5,6 +5,22 @@
  * Contains \RestfulSearchAPISearch.
  */
 
+/**
+ * Class RestfulSearchAPISearch
+ * @package Drupal\restful_search_api_test\resource\search\v1_0
+ *
+ * @Resource(
+ *   name = "search:1.0",
+ *   resource = "search",
+ *   label = "Search",
+ *   description = "Provides info doing Search API searches.",
+ *   dataProvider = {
+ *     "searchIndex": "test_index"
+ *   },
+ *   majorVersion = 1,
+ *   minorVersion = 0
+ * )
+ */
 class RestfulSearchAPISearch extends \RestfulDataProviderSearchAPI implements \RestfulInterface {
 
   /**
