@@ -1,6 +1,6 @@
 name = RESTful Search API
 description = Integration for RESTful of Search API.
-dependencies[] = restful
+dependencies[] = restful (7.x-2.x)
 dependencies[] = search_api
 core = 7.x
 

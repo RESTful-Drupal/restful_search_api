@@ -2,3 +2,5 @@ name = RESTful Search API Example
 description = Shows how to create a resource backed by Search API.
 dependencies[] = restful_search_api
 core = 7.x
+
+registry_autoload[] = PSR-4
