@@ -2,12 +2,14 @@
 
 /**
  * @file
- * Contains \RestfulSearchAPISearch.
+ * Contains Drupal\restful_search_api_test\Plugin\resource\search\v1_0\Search.
  */
 
+namespace Drupal\restful_search_api_test\Plugin\resource\search\v1_0;
+
 /**
- * Class RestfulSearchAPISearch
- * @package Drupal\restful_search_api_test\resource\search\v1_0
+ * Class Search
+ * @package Drupal\restful_search_api_test\Plugin\resource\search\v1_0
  *
  * @Resource(
  *   name = "search:1.0",
@@ -21,7 +23,7 @@
  *   minorVersion = 0
  * )
  */
-class RestfulSearchAPISearch extends \RestfulDataProviderSearchAPI implements \RestfulInterface {
+class Search extends \RestfulDataProviderSearchAPI implements \RestfulInterface {
 
   /**
    * Overrides \RestfulBase::publicFieldsInfo().
