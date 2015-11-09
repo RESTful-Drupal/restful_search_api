@@ -2,11 +2,15 @@
 
 /**
  * @file
- * Contains \RestfulSearchAPIBasicSearch.
+ * Contains \Drupal\restful_search_api_example\Plugin\resource\basic_search\node\v1_0\BasicSearch.
  */
 
+namespace Drupal\restful_search_api_example\Plugin\resource\basic_search\node\v1_0;
+use Drupal\restful\Plugin\resource\Resource;
+use Drupal\restful\Plugin\resource\ResourceInterface;
+
 /**
- * Class RestfulSearchAPIBasicSearch
+ * Class BasicSearch
  * @package Drupal\restful_search_api_example\Plugin\resource\basic_search\node\v1_0
  *
  * @Resource(
@@ -23,12 +27,12 @@
  *   minorVersion = 0
  * )
  */
-class RestfulSearchAPIBasicSearch extends \RestfulDataProviderSearchAPI implements \RestfulInterface {
+class BasicSearch extends Resource implements ResourceInterface {
 
   /**
-   * Overrides \RestfulBase::publicFieldsInfo().
+   * Overrides Resource::publicFields().
    */
-  public function publicFieldsInfo() {
+  public function publicFields() {
     return array(
       'entity_id' => array(
         'property' => 'search_api_id',

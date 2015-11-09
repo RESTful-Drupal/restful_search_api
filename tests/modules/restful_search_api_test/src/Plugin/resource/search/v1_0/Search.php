@@ -29,7 +29,7 @@ use Drupal\restful\Plugin\resource\ResourceInterface;
 class Search extends Resource implements ResourceInterface {
 
   /**
-   * Overrides \RestfulBase::publicFieldsInfo().
+   * Overrides Resource::publicFields().
    */
   protected function publicFields() {
     return array(
