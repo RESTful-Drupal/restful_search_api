@@ -7,7 +7,9 @@
 
 namespace Drupal\restful_search_api\Plugin\resource\DataProvider;
 
-abstract class SearchApi extends \RestfulBase implements SearchApiInterface {
+use Drupal\restful\Plugin\resource\DataProvider\DataProvider;
+
+class SearchApi extends DataProvider implements SearchApiInterface {
 
   /**
    * Separator to drill down on nested result objects for 'property'.
