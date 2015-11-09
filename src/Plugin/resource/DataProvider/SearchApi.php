@@ -2,10 +2,12 @@
 
 /**
  * @file
- * Contains \RestfulDataProviderSearchAPI
+ * Contains \Drupal\restful_search_api\Plugin\resource\DataProvider\SearchApi.
  */
 
-abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \RestfulDataProviderSearchAPIInterface {
+namespace Drupal\restful_search_api\Plugin\resource\DataProvider;
+
+abstract class SearchApi extends \RestfulBase implements SearchApiInterface {
 
   /**
    * Separator to drill down on nested result objects for 'property'.
@@ -72,7 +74,7 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
   }
 
   /**
-   * Constructs a RestfulDataProviderSearchAPI object.
+   * Constructs a SearchApi object.
    *
    * @param array $plugin
    *   Plugin definition.

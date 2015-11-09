@@ -6,9 +6,5 @@ core = 7.x
 
 registry_autoload[] = PSR-4
 
-; Files
-files[] = include/RestfulDataProviderSearchAPI.php
-files[] = include/RestfulDataProviderSearchAPIInterface.php
-
 ; Tests
 files[] = tests/RestfulSearchAPISearchTestCase.test
