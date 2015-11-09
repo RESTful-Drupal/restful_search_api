@@ -31,7 +31,7 @@ class Search extends Resource implements ResourceInterface {
   /**
    * Overrides \RestfulBase::publicFieldsInfo().
    */
-  public function publicFieldsInfo() {
+  protected function publicFields() {
     return array(
       'entity_id' => array(
         'property' => 'search_api_id',
