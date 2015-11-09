@@ -6,8 +6,8 @@
  */
 
 namespace Drupal\restful_search_api_example\Plugin\resource\basic_search\node\v1_0;
-use Drupal\restful\Plugin\resource\Resource;
 use Drupal\restful\Plugin\resource\ResourceInterface;
+use Drupal\restful_search_api\Plugin\Resource\ResourceSearchBase;
 
 /**
  * Class BasicSearch
@@ -22,12 +22,12 @@ use Drupal\restful\Plugin\resource\ResourceInterface;
  *     "searchIndex": "default_node_index"
  *   },
  *   authenticationTypes = TRUE,
- *   authenticationOptional = TRUE
+ *   authenticationOptional = TRUE,
  *   majorVersion = 1,
  *   minorVersion = 0
  * )
  */
-class BasicSearch extends Resource implements ResourceInterface {
+class BasicSearch extends ResourceSearchBase implements ResourceInterface {
 
   /**
    * Overrides Resource::publicFields().

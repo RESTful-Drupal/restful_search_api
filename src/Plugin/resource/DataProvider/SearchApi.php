@@ -7,14 +7,15 @@
 
 namespace Drupal\restful_search_api\Plugin\resource\DataProvider;
 
+use Drupal\restful\Exception\BadRequestException;
+use Drupal\restful\Exception\ServerConfigurationException;
+use Drupal\restful\Exception\ServiceUnavailableException;
+use Drupal\restful\Plugin\resource\DataInterpreter\ArrayWrapper;
+use Drupal\restful\Plugin\resource\DataInterpreter\DataInterpreterArray;
 use Drupal\restful\Plugin\resource\DataProvider\DataProvider;
+use Drupal\restful\Plugin\resource\Field\ResourceFieldCollectionInterface;
 
 class SearchApi extends DataProvider implements SearchApiInterface {
-
-  /**
-   * Separator to drill down on nested result objects for 'property'.
-   */
-  const NESTING_SEPARATOR = '::';
 
   /**
    * Index machine name to query against.
@@ -44,19 +45,16 @@ class SearchApi extends DataProvider implements SearchApiInterface {
    * Return the search index machine name.
    *
    * @return string
+   *
+   * @throws \Drupal\restful\Exception\ServerConfigurationException
+   *   If there is no searchIndex.
    */
   public function getSearchIndex() {
-    return $this->searchIndex;
-  }
-
-  /**
-   * Set the search index machine name.
-   *
-   * @param string $searchIndex
-   *   The new name.
-   */
-  public function setSearchIndex($searchIndex) {
-    $this->searchIndex = $searchIndex;
+    $options = $this->getOptions();
+    if (empty($options['searchIndex'])) {
+      throw new ServerConfigurationException('The Search API data provider needs a search index. None found.');
+    }
+    return $options['searchIndex'];
   }
 
   /**
@@ -76,42 +74,73 @@ class SearchApi extends DataProvider implements SearchApiInterface {
   }
 
   /**
-   * Constructs a SearchApi object.
-   *
-   * @param array $plugin
-   *   Plugin definition.
-   * @param RestfulAuthenticationManager $auth_manager
-   *   (optional) Injected authentication manager.
-   * @param DrupalCacheInterface $cache_controller
-   *   (optional) Injected cache backend.
+   * {@inheritdoc}
    */
-  public function __construct(array $plugin, \RestfulAuthenticationManager $auth_manager = NULL, \DrupalCacheInterface $cache_controller = NULL) {
-    parent::__construct($plugin, $auth_manager, $cache_controller);
-
-    // Validate keys exist in the plugin's "data provider options".
-    $required_keys = array('search_index');
-    $options = $this->processDataProviderOptions($required_keys);
-
-    $this->searchIndex = $options['search_index'];
+  public function count() {
+    throw new ServiceUnavailableException(sprintf('%s is not implemented.', __METHOD__));
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getTotalCount() {
-    return $this->totalCount;
+  public function create($object) {
+    throw new ServiceUnavailableException(sprintf('%s is not implemented.', __METHOD__));
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function viewMultiple(array $identifiers) {
+    $output = array();
+    foreach ($identifiers as $identifier) {
+      $output[] = $this->view($identifier);
+    }
+    return $output;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function update($identifier, $object, $replace = FALSE) {
+    throw new ServiceUnavailableException(sprintf('%s is not implemented.', __METHOD__));
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function remove($identifier) {
+    throw new ServiceUnavailableException(sprintf('%s is not implemented.', __METHOD__));
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getIndexIds() {
+    throw new ServiceUnavailableException(sprintf('%s is not implemented.', __METHOD__));
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function initDataInterpreter($identifier) {
+    return new DataInterpreterArray($this->getAccount(), new ArrayWrapper((array) $identifier));
   }
 
   /**
    * {@inheritdoc}
    *
-   * @throws \RestfulServerConfigurationException
+   * @param mixed $identifier
+   *   The search query.
+   *
+   * @return array
    *   If the provided search index does not exist.
+   *
+   * @throws \Drupal\restful\Exception\ServerConfigurationException If the provided search index does not exist.
    */
-  public function view($id) {
+  public function view($identifier) {
     // In this case the ID is the search query.
     $options = $output = array();
-    $request = $this->getRequest();
+    $input = $this->getRequest()->getParsedInput();
     // Construct the options array.
 
     // limit: The maximum number of search results to return. -1 means no limit.
@@ -119,19 +148,19 @@ class SearchApi extends DataProvider implements SearchApiInterface {
 
     // offset: The position of the first returned search results relative to the
     // whole result in the index.
-    $page = empty($request['page']) ? 0 : $request['page'];
+    $page = empty($input['page']) ? 0 : $input['page'];
     $options['offset'] = $options['limit'] * $page;
 
     try {
-      // Query SearchAPI for the results
-      $search_results = $this->executeQuery($id, $options);
+      // Query SearchAPI for the results.
+      $search_results = $this->executeQuery($identifier, $options);
       foreach ($search_results as $search_result) {
         $output[] = $this->mapSearchResultToPublicFields($search_result);
       }
     }
     catch (\SearchApiException $e) {
       // Relay the exception with one of RESTful's types.
-      throw new \RestfulServerConfigurationException(format_string('Search API Exception: @message', array(
+      throw new ServerConfigurationException(format_string('Search API Exception: @message', array(
         '@message' => $e->getMessage(),
       )));
     }
@@ -152,22 +181,22 @@ class SearchApi extends DataProvider implements SearchApiInterface {
    */
   protected function parseRequestForListFilter() {
     // At the moment RESTful only supports AND conjunctions.
-    $search_api_filter = new SearchApiQueryFilter('AND');
+    $search_api_filter = new \SearchApiQueryFilter('AND');
 
-    $request = $this->getRequest();
-    if (empty($request['filter'])) {
+    $input = $this->getRequest()->getParsedInput();
+    if (empty($input['filter'])) {
       // No filtering is needed.
       return $search_api_filter;
     }
-    $url_params = $this->getPluginKey('url_params');
-    if (!$url_params['filter']) {
-      throw new \RestfulBadRequestException('Filter parameters have been disabled in server configuration.');
+    $options = $this->getOptions();
+    $url_params = empty($options['urlParams']) ? array() : $options['urlParams'];
+    if (empty($url_params['filter'])) {
+      throw new BadRequestException('Filter parameters have been disabled in server configuration.');
     }
 
-    $public_fields = $this->getPublicFields();
-
-    foreach ($request['filter'] as $public_field => $value) {
-      $field = empty($public_fields[$public_field]['property']) ? $public_field : $public_fields[$public_field]['property'];
+    foreach ($input['filter'] as $public_field => $value) {
+      $resource_field = $this->fieldDefinitions->get($public_field);
+      $field = $resource_field->getProperty() ?: $public_field;
 
       if (!is_array($value)) {
         // Request uses the shorthand form for filter. For example
@@ -180,8 +209,6 @@ class SearchApi extends DataProvider implements SearchApiInterface {
       // Clean the operator in case it came from the URL.
       // e.g. filter[minor_version][operator]=">="
       $value['operator'] = str_replace(array('"', "'"), '', $value['operator']);
-
-      $this->isValidOperatorForFilter($value['operator']);
 
       $search_api_filter->condition($field, $value['value'], $value['operator']);
     }
@@ -207,7 +234,7 @@ class SearchApi extends DataProvider implements SearchApiInterface {
    * @param array $options
    *   An array of options passed to search_api_query.
    *
-   * @throws \RestfulServerConfigurationException
+   * @throws ServerConfigurationException
    *   For invalid indices.
    *
    * @return array
@@ -219,7 +246,7 @@ class SearchApi extends DataProvider implements SearchApiInterface {
     $index = search_api_index_load($this->getSearchIndex());
 
     if (!$index) {
-      throw new \RestfulServerConfigurationException(format_string('Search API Exception: Unknown index with ID @id.', array(
+      throw new ServerConfigurationException(format_string('Search API Exception: Unknown index with ID @id.', array(
         '@id' => $this->getSearchIndex(),
       )));
     }
@@ -253,20 +280,20 @@ class SearchApi extends DataProvider implements SearchApiInterface {
    * @param \SearchApiQueryInterface $query
    *   The Search API query.
    *
-   * @throws \RestfulBadRequestException
+   * @throws BadRequestException
    *
    * @see \RestfulEntityBase::getQueryForList
    */
   protected function queryForListSort(\SearchApiQueryInterface $query) {
-    $public_fields = $this->getPublicFields();
 
     // Get the sorting options from the request object.
     $sorts = $this->parseRequestForListSort();
 
-    $sorts = $sorts ? $sorts : $this->defaultSortInfo();
+    $sorts = $sorts ?: $this->defaultSortInfo();
 
     foreach ($sorts as $sort => $direction) {
-      $property = empty($public_fields[$sort]['property']) ? $sort : $public_fields[$sort]['property'];
+      $resource_field = $this->fieldDefinitions->get($sort);
+      $property = $resource_field->getProperty() ?: $sort;
       try {
         $query->sort($property, $direction);
 
@@ -284,19 +311,19 @@ class SearchApi extends DataProvider implements SearchApiInterface {
    * Overrides \RestfulBase::parseRequestForListSort
    */
   protected function parseRequestForListSort() {
-    $request = $this->getRequest();
-    $public_fields = $this->getPublicFields();
+    $input = $this->getRequest()->getParsedInput();
 
-    if (empty($request['sort'])) {
+    if (empty($input['sort'])) {
       return array();
     }
-    $url_params = $this->getPluginKey('url_params');
-    if (!$url_params['sort']) {
-      throw new \RestfulBadRequestException('Sort parameters have been disabled in server configuration.');
+    $options = $this->getOptions();
+    $url_params = empty($options['urlParams']) ? array() : $options['urlParams'];
+    if (empty($url_params['sort'])) {
+      throw new BadRequestException('Sort parameters have been disabled in server configuration.');
     }
 
     $sorts = array();
-    foreach (explode(',', $request['sort']) as $sort) {
+    foreach (explode(',', $input['sort']) as $sort) {
       $direction = $sort[0] == '-' ? 'DESC' : 'ASC';
       $sort = str_replace('-', '', $sort);
 
@@ -328,39 +355,19 @@ class SearchApi extends DataProvider implements SearchApiInterface {
    *   The prepared output.
    */
   protected function mapSearchResultToPublicFields($result) {
-    if ($this->getPluginKey('pass_through')) {
-      return (array) $result;
-    }
-      $output = array();
+    $resource_field_collection = $this->initResourceFieldCollection($result);
     // Loop over all the defined public fields.
-    foreach ($this->getPublicFields() as $public_field_name => $info) {
-      $value = NULL;
-      // If there is a callback defined execute it instead of a direct mapping.
-      if ($info['callback']) {
-        $value = static::executeCallback($info['callback'], array($result));
+    foreach ($this->fieldDefinitions as $public_field_name => $resource_field) {
+      // Map result names to public properties.
+      /* @var \Drupal\restful_search_api\Plugin\resource\Field\ResourceFieldSearchKeyInterface $resource_field */
+      if (!$this->methodAccess($resource_field)) {
+        // Allow passing the value in the request.
+        continue;
       }
-      // Map row names to public properties.
-      elseif ($info['property']) {
-        $value = $result->{$info['property']};
-        if (!empty($info['sub-property'])) {
-          $parts = explode(static::NESTING_SEPARATOR, $info['sub-property']);
-          foreach ($parts as $part) {
-            $value = $value[$part];
-          }
-        }
-      }
-
-      // Execute the process callbacks.
-      if ($value && $info['process_callbacks']) {
-        foreach ($info['process_callbacks'] as $process_callback) {
-          $value = static::executeCallback($process_callback, array($value));
-        }
-      }
-
-      $output[$public_field_name] = $value;
+      $resource_field_collection->set($resource_field->id(), $resource_field);
     }
 
-    return $output;
+    return $resource_field_collection;
   }
 
   /**
@@ -381,11 +388,13 @@ class SearchApi extends DataProvider implements SearchApiInterface {
     foreach ($sorts as $sort => $direction) {
       // Since this is an expensive operation only apply the first sort.
       if (in_array($sort, $available_keys)) {
-        usort($results, function ($a, $b) use ($sort, $direction) {
+        usort($results, function (ResourceFieldCollectionInterface $a, ResourceFieldCollectionInterface $b) use ($sort, $direction) {
+          $val1 = $a->{$sort}->render($a->getInterpreter());
+          $val2 = $b->{$sort}->render($b->getInterpreter());
           if ($direction == 'DESC') {
-            return $a[$sort] < $b[$sort];
+            return $val1[$sort] < $val2[$sort];
           }
-          return $a[$sort] > $b[$sort];
+          return $val1[$sort] > $val2[$sort];
         });
         break;
       }

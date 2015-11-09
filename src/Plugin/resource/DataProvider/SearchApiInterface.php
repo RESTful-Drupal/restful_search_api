@@ -11,13 +11,9 @@ use Drupal\restful\Plugin\resource\DataProvider\DataProviderInterface;
 
 interface SearchApiInterface extends DataProviderInterface {
 
-
   /**
-   * Get the total count of entities that match certain request.
-   *
-   * @return int
-   *   The total number of results without including pagination.
+   * Pass additional HATEOAS to the formatter.
    */
-  public function getTotalCount();
+  public function additionalHateoas();
 
 }
