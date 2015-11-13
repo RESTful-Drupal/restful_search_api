@@ -24,8 +24,8 @@ class ResourceFieldSearchKey extends ResourceField implements ResourceFieldSearc
   public function value(DataInterpreterInterface $interpreter) {
     $value = parent::value($interpreter);
     $definition = $this->getDefinition();
-    if (!empty($definition['sub-property'])) {
-      $parts = explode(static::NESTING_SEPARATOR, $definition['sub-property']);
+    if (!empty($definition['sub_property'])) {
+      $parts = explode(static::NESTING_SEPARATOR, $definition['sub_property']);
       foreach ($parts as $part) {
         $value = $value[$part];
       }

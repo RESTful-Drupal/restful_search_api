@@ -140,16 +140,14 @@ class SearchApi extends DataProvider implements SearchApiInterface {
   public function view($identifier) {
     // In this case the ID is the search query.
     $options = $output = array();
-    $input = $this->getRequest()->getParsedInput();
     // Construct the options array.
 
-    // limit: The maximum number of search results to return. -1 means no limit.
-    $options['limit'] = $this->getRange();
-
-    // offset: The position of the first returned search results relative to the
-    // whole result in the index.
-    $page = empty($input['page']) ? 0 : $input['page'];
-    $options['offset'] = $options['limit'] * $page;
+    // Set the following options:
+    // - offset: The position of the first returned search results relative to
+    //   the whole result in the index.
+    // - limit: The maximum number of search results to return. -1 means no
+    //   limit.
+    list($options['offset'], $options['limit']) = $this->parseRequestForListPagination();
 
     try {
       // Query SearchAPI for the results.
@@ -209,6 +207,8 @@ class SearchApi extends DataProvider implements SearchApiInterface {
       // Clean the operator in case it came from the URL.
       // e.g. filter[minor_version][operator]=">="
       $value['operator'] = str_replace(array('"', "'"), '', $value['operator']);
+
+      $this->isValidOperatorsForFilter(array($value['operator']));
 
       $search_api_filter->condition($field, $value['value'], $value['operator']);
     }

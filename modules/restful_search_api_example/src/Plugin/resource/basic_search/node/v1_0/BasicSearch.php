@@ -51,7 +51,7 @@ class BasicSearch extends ResourceSearchBase implements ResourceInterface {
       ),
       'body' => array(
         'property' => 'body',
-        'sub-property' => LANGUAGE_NONE . '::0::value',
+        'sub_property' => LANGUAGE_NONE . '::0::value',
       ),
       'title' => array(
         'property' => 'title',
