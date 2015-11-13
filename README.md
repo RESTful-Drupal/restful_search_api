@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/RESTful-Drupal/restful_search_api.svg?branch=7.x-1.x)](https://travis-ci.org/RESTful-Drupal/restful_search_api)
+[![Build Status](https://travis-ci.org/RESTful-Drupal/restful_search_api.svg?branch=7.x-2.x)](https://travis-ci.org/RESTful-Drupal/restful_search_api)
 
 # RESTful Search API
 Expose your Search API results with your RESTful API.
@@ -66,14 +66,10 @@ with the search results.
             { "filter": "\"3\"", "count": 10 }
         ]
     },
-    "hal:basic_search": [
+    "data": [
         { "entity_id": 704, "version_id": 704, "relevance": 0.013727446 },
         …
-    ],
-    "_links": {
-        "self": { … },
-        "curies": { … }
-    }
+    ]
 }
 ```
 ## Additional information
