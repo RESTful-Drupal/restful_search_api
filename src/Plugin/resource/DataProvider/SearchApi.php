@@ -180,11 +180,8 @@ class SearchApi extends DataProvider implements SearchApiInterface {
     }
 
     // This is an emergency sort. Only apply it if no sort could be applied.
-    $any_sort_applied = array_filter(array_values($this->sorted));
-    $result = reset($output);
-    $available_keys = array_keys($result);
-    if (!$any_sort_applied) {
-      $this->manualArraySort($available_keys, $output);
+    if (!array_filter(array_values($this->sorted))) {
+      $this->manualArraySort($output);
     }
 
     return $output;
@@ -392,21 +389,21 @@ class SearchApi extends DataProvider implements SearchApiInterface {
    * This is a last resource thing and arguably a good idea. If the results are
    * paginated it can lead to unexpected results.
    *
-   * @param $available_keys
-   *   The available keys on the results array.
-   *
    * @param $results
    *   The array of search results from Search API.
    */
-  protected function manualArraySort($available_keys, &$results) {
+  protected function manualArraySort(&$results) {
+    if (empty($results)) {
+      return;
+    }
     $sorts = $this->parseRequestForListSort();
     $sorts = $sorts ? $sorts : $this->defaultSortInfo();
     foreach ($sorts as $sort => $direction) {
       // Since this is an expensive operation only apply the first sort.
-      if (in_array($sort, $available_keys)) {
+      if ($results[0]->get($sort)) {
         usort($results, function (ResourceFieldCollectionInterface $a, ResourceFieldCollectionInterface $b) use ($sort, $direction) {
-          $val1 = $a->{$sort}->render($a->getInterpreter());
-          $val2 = $b->{$sort}->render($b->getInterpreter());
+          $val1 = $a->get($sort)->render($a->getInterpreter());
+          $val2 = $b->get($sort)->render($b->getInterpreter());
           if ($direction == 'DESC') {
             return $val1[$sort] < $val2[$sort];
           }
