@@ -56,8 +56,8 @@ before_script:
 
 script:
   # Go to our Drupal module directory
-  - mkdir $TRAVIS_BUILD_DIR/../drupal/sites/all/modules/restful
-  - cp -R $TRAVIS_BUILD_DIR/* $TRAVIS_BUILD_DIR/../drupal/sites/all/modules/restful/
+  - mkdir $TRAVIS_BUILD_DIR/../drupal/sites/all/modules/restful_search_api
+  - cp -R $TRAVIS_BUILD_DIR/* $TRAVIS_BUILD_DIR/../drupal/sites/all/modules/restful_search_api/
   # Go to our Drupal main directory
   - cd $TRAVIS_BUILD_DIR/../drupal
 
