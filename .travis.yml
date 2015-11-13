@@ -69,7 +69,7 @@ script:
   # Enable the RESTful modules
   - cd restful_search_api/drupal
   - drush dl restful --yes
-  - drush --yes pm-enable restful_search_api restful_search_api_test
+  - drush --yes pm-enable simpletest restful_search_api restful_search_api_test
   # Download entity validator.
   - drush dl entity_validator --dev --yes
 
