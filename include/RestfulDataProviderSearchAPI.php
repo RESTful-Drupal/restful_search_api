@@ -177,7 +177,7 @@ abstract class RestfulDataProviderSearchAPI extends \RestfulBase implements \Res
       // e.g. filter[minor_version][operator]=">="
       $value['operator'] = str_replace(array('"', "'"), '', $value['operator']);
 
-      $this->isValidOperatorForFilter($value['operator']);
+      $this->isValidOperatorsForFilter(array($value['operator']));
 
       $search_api_filter->condition($field, $value['value'], $value['operator']);
     }
