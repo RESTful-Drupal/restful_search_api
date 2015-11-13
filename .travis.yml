@@ -67,10 +67,10 @@ script:
   - curl -O https://www.drupal.org/files/issues/2086225-entity-access-check-node-create-3.patch
   - patch -p1 $TRAVIS_BUILD_DIR/../drupal/sites/all/modules/entity/modules/callbacks.inc  < 2086225-entity-access-check-node-create-3.patch
   # Enable the RESTful modules
-  - drush dl restful --yes
+  - drush dl restful-7.x-2.x --yes
   - drush --yes pm-enable simpletest restful_search_api restful_search_api_test
   # Download entity validator.
-  - drush dl entity_validator --dev --yes
+  - drush dl entity_validator-7.x-2.0 --dev --yes
 
   # Run the tests
   - cd $TRAVIS_BUILD_DIR/../drupal
