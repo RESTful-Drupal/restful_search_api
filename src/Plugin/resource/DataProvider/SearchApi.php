@@ -10,6 +10,7 @@ namespace Drupal\restful_search_api\Plugin\resource\DataProvider;
 use Drupal\restful\Exception\BadRequestException;
 use Drupal\restful\Exception\ServerConfigurationException;
 use Drupal\restful\Exception\ServiceUnavailableException;
+use Drupal\restful\Http\RequestInterface;
 use Drupal\restful\Plugin\resource\DataInterpreter\ArrayWrapper;
 use Drupal\restful\Plugin\resource\DataInterpreter\DataInterpreterArray;
 use Drupal\restful\Plugin\resource\DataProvider\DataProvider;
@@ -40,6 +41,21 @@ class SearchApi extends DataProvider implements SearchApiInterface {
    * Additional information for the query.
    */
   protected $hateoas = array();
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(RequestInterface $request, ResourceFieldCollectionInterface $field_definitions, $account, $plugin_id, $resource_path = NULL, array $options = array(), $langcode = NULL) {
+    parent::__construct($request, $field_definitions, $account, $plugin_id, $resource_path, $options, $langcode);
+    if (empty($this->options['urlParams'])) {
+      $this->options['urlParams'] = array(
+        'filter' => TRUE,
+        'sort' => TRUE,
+        'fields' => TRUE,
+        'loadByFieldName' => TRUE,
+      );
+    }
+  }
 
   /**
    * Return the search index machine name.
@@ -293,7 +309,7 @@ class SearchApi extends DataProvider implements SearchApiInterface {
 
     foreach ($sorts as $sort => $direction) {
       $resource_field = $this->fieldDefinitions->get($sort);
-      $property = $resource_field->getProperty() ?: $sort;
+      $property = ($resource_field && $resource_field->getProperty()) ? $resource_field->getProperty() : $sort;
       try {
         $query->sort($property, $direction);
 

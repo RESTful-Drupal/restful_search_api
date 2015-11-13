@@ -19,12 +19,17 @@ use Drupal\restful_search_api\Plugin\Resource\ResourceSearchBase;
  *   label = "Basic Search",
  *   description = "Provides basic info doing Search API searches.",
  *   dataProvider = {
- *     "searchIndex": "default_node_index"
+ *     "searchIndex": "default_node_index",
+ *     "idField": "entity_id"
+ *   },
+ *   renderCache = {
+ *     "render": FALSE,
  *   },
  *   authenticationTypes = TRUE,
  *   authenticationOptional = TRUE,
  *   majorVersion = 1,
- *   minorVersion = 0
+ *   minorVersion = 0,
+ *   formatter = "json"
  * )
  */
 class BasicSearch extends ResourceSearchBase implements ResourceInterface {

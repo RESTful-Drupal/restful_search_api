@@ -9,9 +9,9 @@ namespace Drupal\restful_search_api\Plugin\resource\Field;
 
 use Drupal\restful\Http\RequestInterface;
 use Drupal\restful\Plugin\resource\DataInterpreter\DataInterpreterInterface;
-use Drupal\restful\Plugin\resource\Field\ResourceField;
+use Drupal\restful\Plugin\resource\Field\ResourceFieldKeyValue;
 
-class ResourceFieldSearchKey extends ResourceField implements ResourceFieldSearchKeyInterface {
+class ResourceFieldSearchKey extends ResourceFieldKeyValue implements ResourceFieldSearchKeyInterface {
 
   /**
    * Separator to drill down on nested result objects for 'property'.
