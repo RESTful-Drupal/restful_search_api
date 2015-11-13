@@ -22,6 +22,7 @@ use Drupal\restful_search_api\Plugin\Resource\ResourceSearchBase;
  *   dataProvider = {
  *     "searchIndex": "test_index"
  *   },
+ *   authenticationOptional = TRUE,
  *   majorVersion = 1,
  *   minorVersion = 0
  * )
