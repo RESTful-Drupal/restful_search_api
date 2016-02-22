@@ -8,6 +8,7 @@
 namespace Drupal\restful_search_api\Plugin\resource\DataProvider;
 
 use Drupal\restful\Exception\BadRequestException;
+use Drupal\restful\Exception\ForbiddenException;
 use Drupal\restful\Exception\ServerConfigurationException;
 use Drupal\restful\Exception\ServiceUnavailableException;
 use Drupal\restful\Http\RequestInterface;
@@ -16,6 +17,11 @@ use Drupal\restful\Plugin\resource\DataInterpreter\DataInterpreterArray;
 use Drupal\restful\Plugin\resource\DataProvider\DataProvider;
 use Drupal\restful\Plugin\resource\Field\ResourceFieldCollectionInterface;
 
+/**
+ * Class SearchApi.
+ *
+ * @package Drupal\restful_search_api\Plugin\resource\DataProvider
+ */
 class SearchApi extends DataProvider implements SearchApiInterface {
 
   /**
@@ -107,11 +113,18 @@ class SearchApi extends DataProvider implements SearchApiInterface {
    * {@inheritdoc}
    */
   public function viewMultiple(array $identifiers) {
-    $output = array();
+    $return = array();
     foreach ($identifiers as $identifier) {
-      $output[] = $this->view($identifier);
+      try {
+        $row = $this->view($identifier);
+      }
+      catch (ForbiddenException $e) {
+        $row = NULL;
+      }
+      $return[] = $row;
     }
-    return $output;
+
+    return array_filter($return);
   }
 
   /**
